@@ -1,0 +1,53 @@
+{
+  "ui": {
+    "back": "Back",
+    "send": "Send",
+    "loadMore": "Load more",
+    "enterIdPlaceholder": "Enter your ID...",
+    "loading": "Loading…"
+  },
+  "detect": {
+    "auth": {
+      "enterId": [
+        "enter your id",
+        "please enter your id",
+        "id must hold digits only",
+        "please fill in your id"
+      ]
+    }
+  },
+  "aliases": {
+    "here": ["You are here"],
+    "ignore": ["Cancelling Option", "Cancel Option"],
+    "steps": {
+      "customer identification": [
+        "Customer Identification",
+        "Customer Authentication",
+        "New Customer"
+      ],
+      "service type": ["Service Type", "Service Types"],
+      "service": ["Service", "Services", "Select Service"],
+      "location": ["Location", "Branch"],
+      "details": ["Details"],
+      "date": ["Date"],
+      "time": ["Time"],
+      "set appointment": ["Set Appointment", "Book Appointment"],
+      "success": ["Success"]
+    }
+  },
+  "chipsTitle": "Your selection",
+  "chipChange": "Change",
+  "chips": {
+    "id": "ID",
+    "journey": "Journey",
+    "serviceType": "Service type",
+    "service": "Service",
+    "location": "Location",
+    "date": "Date",
+    "time": "Time"
+  },
+  "errors": {
+    "network": "Network error",
+    "noJourneys": "No journeys configured. Please add them to appsettings.json."
+  }
+}

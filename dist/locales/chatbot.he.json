@@ -1,0 +1,44 @@
+{
+  "ui": {
+    "back": "חזרה",
+    "send": "שליחה",
+    "loadMore": "טען עוד",
+    "enterIdPlaceholder": "הזן מזהה...",
+    "loading": "טוען…"
+  },
+  "detect": {
+    "auth": {
+      "enterId": ["הזן את ה-id", "אנא הזן את ה-id", "מספר ה-id מכיל ספרות בלבד"]
+    }
+  },
+  "aliases": {
+    "here": ["אתה כאן", "את כאן", "אתם כאן", "You are here"],
+    "ignore": ["אפשרות ביטול", "ביטול"],
+    "steps": {
+      "customer identification": ["אימות לקוח", "זיהוי לקוח", "לקוח חדש"],
+      "service type": ["סוג שירות"],
+      "service": ["שירות", "בחירת שירות"],
+      "location": ["מיקום", "סניף"],
+      "details": ["פרטים"],
+      "date": ["תאריך"],
+      "time": ["זמן", "שעה"],
+      "set appointment": ["קבע תור", "אישור תור"],
+      "success": ["הצלחה"]
+    }
+  },
+  "chipsTitle": "הבחירה שלך",
+  "chipChange": "שינוי",
+  "chips": {
+    "id": "מזהה",
+    "journey": "מסלול",
+    "serviceType": "סוג שירות",
+    "service": "שירות",
+    "location": "מיקום",
+    "date": "תאריך",
+    "time": "שעה"
+  },
+  "errors": {
+    "network": "שגיאת רשת",
+    "noJourneys": "לא הוגדרו מסלולים. הוסיפו אותם ל-appsettings.json."
+  }
+}
