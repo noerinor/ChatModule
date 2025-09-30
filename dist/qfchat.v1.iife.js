@@ -1,19 +1,12 @@
-(function (p, I) {
-  typeof exports == "object" && typeof module < "u"
-    ? I(exports)
-    : typeof define == "function" && define.amd
-    ? define(["exports"], I)
-    : ((p = typeof globalThis < "u" ? globalThis : p || self),
-      I((p.QFChat = {})));
-})(this, function (p) {
+var QFChat = (function (y) {
   "use strict";
-  function I() {
+  function Se() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (e) => {
       const t = (Math.random() * 16) | 0;
       return (e === "x" ? t : (t & 3) | 8).toString(16);
     });
   }
-  const oe = [
+  const ae = [
     "journey",
     "customer identification",
     "service type",
@@ -35,8 +28,9 @@
       [t] = e.split("-");
     return t || "en";
   }
-  let ie = localStorage.getItem("sessionId") || (crypto?.randomUUID?.() ?? I());
-  localStorage.setItem("sessionId", ie);
+  let oe =
+    localStorage.getItem("sessionId") || (crypto?.randomUUID?.() ?? Se());
+  localStorage.setItem("sessionId", oe);
   const o = {
     isAuthPhase: !0,
     lastScreenWasAuthLike: !1,
@@ -75,7 +69,7 @@
       (o.selection.date = ""),
       (o.selection.time = "");
   }
-  function re() {
+  function ie() {
     (o.availableSteps = new Set()),
       (o.journeyOrder = []),
       (o.availableDates = []),
@@ -91,34 +85,34 @@
       time: "",
     });
   }
-  function se() {
+  function re() {
     o.backLockedUntilRestart = !0;
   }
-  function H() {
+  function P() {
     o.backLockedUntilRestart = !1;
   }
-  function ce() {
+  function se() {
     o.chipsLocked = !0;
   }
-  function le() {
+  function ce() {
     o.chipsLocked = !1;
   }
   function Ce() {
     ve(),
-      re(),
+      ie(),
       (o.journeyChosen = null),
       (o.pendingId = ""),
       (o.currentStepName = ""),
-      H(),
-      le();
+      P(),
+      ce();
   }
   function Le() {
     return o.backLockedUntilRestart ? !1 : !!o.journeyChosen;
   }
   let Ae = "./locales";
-  const g = Object.create(null);
-  let h = Be(),
-    m = "en";
+  const m = Object.create(null);
+  let g = Be(),
+    p = "en";
   function A(e) {
     const t = String(e || "en")
       .toLowerCase()
@@ -137,21 +131,21 @@
       return "en";
     }
   }
-  async function N(e) {
+  async function I(e) {
     const t = A(e);
-    if (g[t]) return g[t];
+    if (m[t]) return m[t];
     try {
       const n = await fetch(`${Ae}/chatbot.${t}.json`, { cache: "no-store" });
       if (!n.ok) throw new Error(`HTTP ${n.status}`);
       const a = await n.json();
-      return (g[t] = a), a;
+      return (m[t] = a), a;
     } catch (n) {
       return (
         console.warn(
           `[localization] Missing language file "${t}" (${n.message}).`
         ),
-        (g[t] = {}),
-        g[t]
+        (m[t] = {}),
+        m[t]
       );
     }
   }
@@ -160,7 +154,7 @@
       .split(".")
       .reduce((n, a) => (n && a in n ? n[a] : void 0), e);
   }
-  function F(e) {
+  function H(e) {
     try {
       const t = A(e),
         n =
@@ -171,41 +165,41 @@
       document.documentElement.dir = "ltr";
     }
   }
-  async function de(e) {
-    e && (h = A(e));
-    const t = [N("en"), N(h)];
-    m && m !== "en" && m !== h && t.push(N(m)),
+  async function le(e) {
+    e && (g = A(e));
+    const t = [I("en"), I(g)];
+    p && p !== "en" && p !== g && t.push(I(p)),
       await Promise.all(t),
-      F(h || m || "en");
+      H(g || p || "en");
   }
-  function J() {
-    return h;
+  function F() {
+    return g;
   }
   function Ee(e) {
-    (h = A(e)), F(h);
+    (g = A(e)), H(g);
   }
   async function Ie(e) {
-    (m = A(e)), await N(m), F(h || m);
+    (p = A(e)), await I(p), H(g || p);
   }
   async function Ne(e) {
-    await N(e);
+    await I(e);
   }
   function u(e) {
     let t;
     return (
-      (t = B(g[h] || {}, e)),
+      (t = B(m[g] || {}, e)),
       t !== void 0
         ? t
-        : ((t = B(g[m] || {}, e)),
+        : ((t = B(m[p] || {}, e)),
           t !== void 0
             ? (console.warn(
-                `[localization] Missing "${e}" for "${h}", used journey default "${m}".`
+                `[localization] Missing "${e}" for "${g}", used journey default "${p}".`
               ),
               t)
-            : ((t = B(g.en || {}, e)),
+            : ((t = B(m.en || {}, e)),
               t !== void 0
                 ? (console.warn(
-                    `[localization] Missing "${e}" for "${h}" and "${m}", used "en".`
+                    `[localization] Missing "${e}" for "${g}" and "${p}", used "en".`
                   ),
                   t)
                 : (console.warn(
@@ -216,10 +210,10 @@
   }
   function Te(e, t) {
     const n = String(t).toLowerCase().split("-")[0];
-    let a = B(g[n] || {}, e);
+    let a = B(m[n] || {}, e);
     return a !== void 0 ||
-      ((a = B(g[m] || {}, e)), a !== void 0) ||
-      ((a = B(g.en || {}, e)), a !== void 0)
+      ((a = B(m[p] || {}, e)), a !== void 0) ||
+      ((a = B(m.en || {}, e)), a !== void 0)
       ? a
       : e;
   }
@@ -227,10 +221,10 @@
     String(e || "")
       .toLowerCase()
       .trim();
-  let T = { lang: null, steps: {}, hereRegex: null, ignoreSet: new Set() };
-  function q() {
-    const e = J();
-    if (T.lang === e && T.hereRegex) return T;
+  let N = { lang: null, steps: {}, hereRegex: null, ignoreSet: new Set() };
+  function J() {
+    const e = F();
+    if (N.lang === e && N.hereRegex) return N;
     const t = u("aliases.steps"),
       n = u("aliases.here"),
       a = u("aliases.ignore"),
@@ -255,40 +249,40 @@
       const It = Array.isArray(s[E]) ? s[E] : [];
       r[E] = [...new Set([...(It || []), ...i[E]])];
     }
-    const O = `^(${(Array.isArray(n) && n.length
+    const M = `^(${(Array.isArray(n) && n.length
         ? n
         : ["you are here", "вы здесь", "ви тут", "אתה כאן", "את כאן", "אתם כאן"]
       )
         .map((E) => E.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
         .join("|")})\\s*:\\s*`,
-      L = new RegExp(O, "i"),
+      L = new RegExp(M, "i"),
       l = ["cancelling option", "опция отмены"],
-      ae = Array.isArray(a) ? a : [],
-      Et = new Set([...l.map(S), ...ae.map(S)]);
-    return (T = { lang: e, steps: r, hereRegex: L, ignoreSet: Et }), T;
+      ne = Array.isArray(a) ? a : [],
+      Et = new Set([...l.map(S), ...ne.map(S)]);
+    return (N = { lang: e, steps: r, hereRegex: L, ignoreSet: Et }), N;
   }
-  function b(e) {
-    const { steps: t, hereRegex: n } = q(),
+  function h(e) {
+    const { steps: t, hereRegex: n } = J(),
       a = S(String(e || "").replace(n, ""));
     if (!a) return "";
     for (const [i, r] of Object.entries(t))
       if (r.some((s) => a.includes(S(s)))) return i;
     return a;
   }
-  function z(e) {
-    const t = b(e),
+  function q(e) {
+    const t = h(e),
       a = (Array.isArray(o.journeyOrder) ? o.journeyOrder : []).indexOf(t);
     if (a !== -1) return a;
-    const i = oe.indexOf(t);
+    const i = ae.indexOf(t);
     return i === -1 ? 999 : 500 + i;
   }
-  function W(e) {
-    const { hereRegex: t } = q(),
+  function z(e) {
+    const { hereRegex: t } = J(),
       n = e?.journeyMap || [],
       a = n.find((r) => t.test(r?.stepName || ""));
-    if (a) return b(a.stepName);
+    if (a) return h(a.stepName);
     for (const r of n) {
-      const s = b(r.stepName || "");
+      const s = h(r.stepName || "");
       if (s) return s;
     }
     const i = (e?.options || []).map((r) => r.optionName || r);
@@ -301,7 +295,7 @@
       : null;
   }
   function je(e) {
-    const { hereRegex: t, ignoreSet: n } = q();
+    const { hereRegex: t, ignoreSet: n } = J();
     o.availableSteps || (o.availableSteps = new Set()),
       Array.isArray(o.journeyOrder) || (o.journeyOrder = []);
     const i = (e?.journeyMap || [])
@@ -311,19 +305,19 @@
           .trim()
       )
       .filter((r) => !n.has(S(r)))
-      .map(b)
+      .map(h)
       .filter((r) => r);
     for (const r of i)
       o.availableSteps.add(r),
         o.journeyOrder.includes(r) || o.journeyOrder.push(r);
   }
   function Me(e) {
-    return W(e) === "customer identification";
+    return z(e) === "customer identification";
   }
   function Oe(e) {
-    return W(e) === "success";
+    return z(e) === "success";
   }
-  function ue(e) {
+  function de(e) {
     const n = String(e || "")
         .replace(/<ol[\s\S]*?<\/ol>/gi, "")
         .replace(/<ul[\s\S]*?<\/ul>/gi, "")
@@ -354,7 +348,7 @@
     const n = Array.isArray(e.journeyMap) ? e.journeyMap : [];
     for (const { stepName: a, stepAnswer: i } of n)
       if (i)
-        switch (b(a)) {
+        switch (h(a)) {
           case "service type":
             t.serviceType = i;
             break;
@@ -372,10 +366,10 @@
             break;
         }
   }
-  let U = { lang: null, enterIdPhrases: [] };
+  let O = { lang: null, enterIdPhrases: [] };
   function Re() {
-    const e = J();
-    if (U.lang === e) return U;
+    const e = F();
+    if (O.lang === e) return O;
     let t = u("detect.auth.enterId");
     return (
       (!Array.isArray(t) || t.length === 0) &&
@@ -384,14 +378,14 @@
           "please enter your id",
           "id must hold digits only",
         ]),
-      (U = { lang: e, enterIdPhrases: t.filter(Boolean) }),
-      U
+      (O = { lang: e, enterIdPhrases: t.filter(Boolean) }),
+      O
     );
   }
-  function Y(e) {
+  function W(e) {
     if (Me(e)) return !0;
     if (!(!Array.isArray(e?.options) || e.options.length === 0)) return !1;
-    const n = S(ue(e?.message || "")),
+    const n = S(de(e?.message || "")),
       { enterIdPhrases: a } = Re();
     return a.some((i) => n.includes(S(i)));
   }
@@ -420,9 +414,9 @@
       c.chatBody &&
       c.chatWidget.insertBefore(w, c.chatBody);
   }
-  function $(e, { replace: t = !1 } = {}) {
-    X();
-    const n = M();
+  function U(e, { replace: t = !1 } = {}) {
+    V();
+    const n = j();
     t && (n.innerHTML = "");
     const a = document.createElement("div");
     (a.className = "bubble bot"),
@@ -430,8 +424,8 @@
       n.appendChild(a),
       x();
   }
-  function fe(e, t) {
-    X();
+  function ue(e, t) {
+    V();
     const n = document.createElement("div");
     (n.className = "options-list"),
       e.forEach((a) => {
@@ -440,7 +434,7 @@
           s = document.createElement("button");
         (s.className =
           "option-btn" + (r === "/goBack" ? " option-btn-back" : "")),
-          (s.textContent = ue(i)),
+          (s.textContent = de(i)),
           (s.onclick = () => t(r, i)),
           n.appendChild(s);
       }),
@@ -472,13 +466,13 @@
     const e = d.querySelector("#load-more-btn");
     e && e.remove();
   }
-  function R(e) {
+  function $(e) {
     c.backButton.style.display = e ? "inline-block" : "none";
   }
-  function j(e) {
+  function T(e) {
     c.inputArea.style.display = e ? "flex" : "none";
   }
-  function _() {
+  function R() {
     document
       .querySelectorAll(".option-btn, .date-btn, .load-more")
       .forEach((e) => {
@@ -488,9 +482,9 @@
   function x() {
     Ue(c.chatBody);
   }
-  let pe = !1;
+  let fe = !1;
   function Je() {
-    if (pe) return;
+    if (fe) return;
     const e = document.createElement("style");
     (e.textContent = `
 @keyframes cm-spin { to { transform: rotate(360deg) } }
@@ -504,11 +498,11 @@
   animation: cm-spin 1s linear infinite;
 }`),
       document.head.appendChild(e),
-      (pe = !0);
+      (fe = !0);
   }
-  let me = !1;
+  let pe = !1;
   function qe() {
-    if (me) return;
+    if (pe) return;
     const e = document.createElement("style");
     (e.textContent = `
 #content-area .bubble.skeleton{
@@ -559,11 +553,11 @@
 }
 `),
       document.head.appendChild(e),
-      (me = !0);
+      (pe = !0);
   }
-  let ge = !1;
+  let me = !1;
   function ze() {
-    if (ge) return;
+    if (me) return;
     const e = document.createElement("style");
     (e.textContent = `
 #content-area .bubble.pending{
@@ -586,31 +580,31 @@
 @keyframes cm-typing{ 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-2px);opacity:.95} }
 `),
       document.head.appendChild(e),
-      (ge = !0);
+      (me = !0);
   }
-  let y = null;
-  function V(e = "") {
-    if ((ze(), y && y.isConnected)) return y;
-    const t = M();
+  let b = null;
+  function Y(e = "") {
+    if ((ze(), b && b.isConnected)) return b;
+    const t = j();
     return (
-      (y = document.createElement("div")),
-      (y.className = "bubble pending"),
-      (y.innerHTML = `
+      (b = document.createElement("div")),
+      (b.className = "bubble pending"),
+      (b.innerHTML = `
     <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
     <span>${
       e || (typeof u == "function" && u("ui.loading")) || "Loading…"
     }</span>
   `),
-      t.appendChild(y),
+      t.appendChild(b),
       x(),
-      y
+      b
     );
   }
-  function he() {
-    y && (y.remove(), (y = null));
+  function ge() {
+    b && (b.remove(), (b = null));
   }
   function We(e) {
-    Je(), X();
+    Je(), V();
     const t = document.createElement("div");
     t.id = "cm-loader";
     const n = document.createElement("div");
@@ -626,7 +620,7 @@
     const e = d.querySelector("#cm-loader");
     e && e.remove();
   }
-  function M() {
+  function j() {
     let e = d.querySelector(".msg__text");
     return (
       e ||
@@ -639,7 +633,7 @@
   }
   function Ve() {
     qe();
-    const e = M(),
+    const e = j(),
       t = ["w100", "w95", "w80", "w60"],
       n = document.createElement("div");
     return (
@@ -666,21 +660,21 @@
   function Ke(e) {
     e && e.isConnected && e.remove();
   }
-  function X() {
+  function V() {
     d.querySelectorAll(
       ".options-list, #date-list, #load-more-btn, #cm-loader"
     ).forEach((e) => e.remove());
   }
   function Ge(e) {
-    const t = M(),
+    const t = j(),
       n = document.createElement("div");
     (n.className = "bubble user"),
       (n.textContent = String(e ?? "")),
       t.appendChild(n),
       x();
   }
-  function K(e) {
-    const t = M(),
+  function X(e) {
+    const t = j(),
       n = document.createElement("div");
     (n.className = "bubble bot"),
       (n.innerHTML = String(e ?? "")),
@@ -688,22 +682,22 @@
       x();
   }
   const Qe = "appsettings.json";
-  let D = null;
-  async function G() {
-    if (D) return D;
+  let _ = null;
+  async function K() {
+    if (_) return _;
     const e = await fetch(Qe, { cache: "no-store" });
     if (!e.ok) throw new Error(`config http error: ${e.status}`);
-    return (D = await e.json()), D;
+    return (_ = await e.json()), _;
   }
   async function Ze() {
-    const e = await G(),
+    const e = await K(),
       t = new URL(location.href).searchParams.get("api");
     if (t) return t;
     if (!e.apiUrl) throw new Error("appsettings.json: missing 'apiUrl'.");
     return String(e.apiUrl);
   }
   async function et() {
-    const e = await G(),
+    const e = await K(),
       t = String(e.journeyCommandPrefix || "/select-journey-");
     return (e.journeys || [])
       .map((a) =>
@@ -722,7 +716,7 @@
       .filter((a) => a.label && a.value);
   }
   async function tt() {
-    const e = await G(),
+    const e = await K(),
       t = (n, a = []) =>
         new Set((Array.isArray(n) ? n : a).map((i) => String(i).toLowerCase()));
     return {
@@ -744,7 +738,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify([
-          { SessionId: ie, Message: e, ClearCache: !!t, LngCode: J() },
+          { SessionId: oe, Message: e, ClearCache: !!t, LngCode: F() },
         ]),
         signal: a.signal,
       });
@@ -761,17 +755,17 @@
       clearTimeout(i);
     }
   }
-  const be = 14,
+  const he = 14,
     at = 3,
     ot = 2;
   async function it(e) {
-    const t = b(e),
-      n = z(t);
+    const t = h(e),
+      n = q(t);
     if (n === -1) return !1;
-    let a = be,
+    let a = he,
       i = 0;
     for (; a-- > 0; ) {
-      const r = z(o.currentStepName || "");
+      const r = q(o.currentStepName || "");
       if (r !== -1 && r <= n) return !0;
       let s;
       try {
@@ -779,25 +773,25 @@
       } catch {
         break;
       }
-      if ((await C(s), z(o.currentStepName || "") >= r)) {
+      if ((await C(s), q(o.currentStepName || "") >= r)) {
         if (++i >= ot) break;
       } else i = 0;
     }
     return !1;
   }
   const rt = { service: "service type", "service type": "location" };
-  async function ye(e) {
-    let t = b(e);
+  async function be(e) {
+    let t = h(e);
     for (let n = 0; n < at && t; n++) {
       if (await it(t)) return;
       t = rt[t];
     }
   }
-  async function P(e) {
-    const t = b(e);
+  async function D(e) {
+    const t = h(e);
     if (!t) return;
-    let n = be;
-    for (; n-- > 0 && b(o.currentStepName) !== t; ) {
+    let n = he;
+    for (; n-- > 0 && h(o.currentStepName) !== t; ) {
       let a;
       try {
         a = await k("/goBack", !1);
@@ -807,14 +801,14 @@
       await C(a);
     }
   }
-  const Q = (e) =>
+  const G = (e) =>
       String(e || "")
         .toLowerCase()
         .replace(/\s+/g, " ")
         .trim(),
     v = (e, ...t) => {
       for (const n of t) {
-        const a = Q(n);
+        const a = G(n);
         if (!a) continue;
         const i = a.split(/[|,;]+/).map((r) => r.trim());
         for (const r of e)
@@ -823,10 +817,10 @@
       return !1;
     };
   function st() {
-    Ce(), j(!1), R(!1), Z(), ne();
+    Ce(), T(!1), $(!1), Q(), te();
   }
   async function ct() {
-    await de(), _e(), lt(), ut();
+    await le(), _e(), lt(), ut();
   }
   function lt() {
     c.toggleButton.addEventListener("click", () => {
@@ -838,20 +832,20 @@
           c.chatWidget.classList.remove("open"),
           (c.toggleButton.style.display = "block");
       }),
-      c.sendButton.addEventListener("click", we),
+      c.sendButton.addEventListener("click", ye),
       c.chatInput.addEventListener("keydown", (e) => {
-        e.key === "Enter" && (e.preventDefault(), we());
+        e.key === "Enter" && (e.preventDefault(), ye());
       }),
       c.backButton.addEventListener("click", dt);
   }
   async function dt(e) {
     if ((e?.preventDefault?.(), !o.backLockedUntilRestart)) {
-      _(), V(u("ui.loading") || "Loading…");
+      R(), Y(u("ui.loading") || "Loading…");
       try {
         const t = await k("/goBack", !1);
         await C(t);
       } catch (t) {
-        he(), $(String(t?.message || "Back failed"));
+        ge(), U(String(t?.message || "Back failed"));
       }
     }
   }
@@ -861,17 +855,17 @@
     } catch (e) {
       console.error("Failed to load configuration:", e), (o.JOURNEYS = []);
     }
-    H(),
+    P(),
       (o.journeyChosen = null),
       (o.pendingId = ""),
-      j(!0),
-      R(!1),
-      ne(),
-      H(),
-      le(),
-      Z();
+      T(!0),
+      $(!1),
+      te(),
+      P(),
+      ce(),
+      Q();
   }
-  async function we(e) {
+  async function ye(e) {
     e?.preventDefault?.();
     const t = c.chatInput.value.trim();
     if (!t) return;
@@ -883,18 +877,18 @@
     try {
       const i = await k(t, !1);
       clearTimeout(a),
-        n ? Xe(i.message, n) : K(i.message),
+        n ? Xe(i.message, n) : X(i.message),
         await C(i, { skipMessage: !0 });
     } catch {
-      clearTimeout(a), n && Ke(n), K("…connection error, please try again.");
+      clearTimeout(a), n && Ke(n), X("…connection error, please try again.");
     }
   }
-  function Z() {
-    if (($(""), (d.innerHTML = ""), !o.JOURNEYS.length)) {
-      $("No journeys configured. Please add them to appsettings.json.");
+  function Q() {
+    if ((U(""), (d.innerHTML = ""), !o.JOURNEYS.length)) {
+      U("No journeys configured. Please add them to appsettings.json.");
       return;
     }
-    fe(
+    ue(
       o.JOURNEYS.map((e) => ({ optionName: e.label, optionValue: e.value })),
       () => {}
     ),
@@ -906,28 +900,28 @@
   async function ft(e) {
     o.journeyChosen = e;
     const t = e.defaultLng || "en";
-    await Ie(t), await Ne(t), ke(), re(), _();
+    await Ie(t), await Ne(t), ke(), ie(), R();
     const n = Te("ui.loading", t);
     We(n);
     try {
       const a = await k(e.value, !0);
       await C(a), await wt(a);
     } catch (a) {
-      (o.journeyChosen = null), j(!0), R(!1), te(a.message);
+      (o.journeyChosen = null), T(!0), $(!1), ee(a.message);
     } finally {
       Ye();
     }
   }
-  async function ee(e, t) {
+  async function Z(e, t) {
     if (v(o.commands.restart, e, t)) {
       st();
       return;
     }
     if (v(o.commands.end, e, t)) {
-      se(), ce(), j(!1);
+      re(), se(), T(!1);
       return;
     }
-    if ((v(o.commands.cancel, e, t) && _(), e === "/goBack")) {
+    if ((v(o.commands.cancel, e, t) && R(), e === "/goBack")) {
       await mt();
       return;
     }
@@ -936,12 +930,12 @@
       const a = await k(e, !1);
       pt(n, t), await C(a);
     } catch (a) {
-      te(a.message);
+      ee(a.message);
     }
   }
   function pt(e, t) {
     if (!e || !t) return;
-    switch (b(e)) {
+    switch (h(e)) {
       case "customer identification":
         (o.selection.id = t), (o.pendingId = "");
         break;
@@ -968,12 +962,12 @@
     }
   }
   async function mt() {
-    _();
+    R();
     try {
       const e = await k("/goBack", !1);
       await C(e);
     } catch (e) {
-      te(e.message);
+      ee(e.message);
     }
   }
   function gt(e) {
@@ -990,44 +984,44 @@
           return !(
             v(o.commands.restart, r, s) ||
             v(o.commands.cancel, r, s) ||
-            Q(r) === "/goback" ||
-            Q(s) === "/goback"
+            G(r) === "/goback" ||
+            G(s) === "/goback"
           );
         });
   }
   async function C(e, t = {}) {
-    he();
+    ge();
     const { skipMessage: n = !1 } = t;
-    (o.currentStepName = W(e) || o.currentStepName || ""),
+    (o.currentStepName = z(e) || o.currentStepName || ""),
       je(e),
       $e(e, o.selection);
-    const a = Y(e),
+    const a = W(e),
       i = gt(e);
-    j(!i),
+    T(!i),
       (o.lastScreenWasAuthLike = a),
       a &&
         o.pendingId &&
         c.chatInput &&
         !c.chatInput.value &&
         (c.chatInput.value = o.pendingId),
-      i && (se(), ce()),
+      i && (re(), se()),
       e.journeyMap;
     const r = Le() && !i;
-    R(r), ht(o.currentStepName), ne(), n || $(e.message);
+    $(r), ht(o.currentStepName), te(), n || U(e.message);
     const s = Array.isArray(e.options) ? e.options : [],
       f = (l) => /^\d{2}\/\d{2}\/\d{4}$/.test(l.optionName || l),
-      O = s.filter(f),
+      M = s.filter(f),
       L = s.filter(
         (l) => !v(o.commands.end, l?.optionValue ?? l, l?.optionName ?? l)
       );
-    O.length
-      ? (await bt(s), (o.datesShown = 0), Se())
-      : L.length && fe(L, (l, ae) => ee(l, ae)),
+    M.length
+      ? (await bt(s), (o.datesShown = 0), we())
+      : L.length && ue(L, (l, ne) => Z(l, ne)),
       x();
   }
-  function te(e) {
+  function ee(e) {
     const t = e?.message ? String(e.message) : String(e || "Unknown error");
-    K(t), x();
+    X(t), x();
   }
   function ht(e) {
     if (!e || o.availableSteps.size === 0) return;
@@ -1036,8 +1030,8 @@
       o.availableSteps.has("location") || (o.selection.location = ""),
       o.availableSteps.has("date") || (o.selection.date = ""),
       o.availableSteps.has("time") || (o.selection.time = "");
-    const t = oe.filter((r) => o.availableSteps.has(r)),
-      n = b(e),
+    const t = ae.filter((r) => o.availableSteps.has(r)),
+      n = h(e),
       a = t.indexOf(n);
     if (a === -1) return;
     const i = {
@@ -1053,7 +1047,7 @@
       f !== -1 && f >= a && (o.selection[r] = "");
     }
   }
-  function ne() {
+  function te() {
     const e = o.selection;
     if (
       !(
@@ -1078,7 +1072,7 @@
       n.appendChild(a);
     const i = document.createElement("div");
     i.className = "summary-chips";
-    const r = (s, f, O, L) => {
+    const r = (s, f, M, L) => {
       if (!f) return;
       const l = document.createElement("button");
       (l.className = "chip"),
@@ -1088,23 +1082,23 @@
           ? ((l.disabled = !0), l.classList.add("disabled"))
           : (l.onclick = L
               ? () => {
-                  V(), L();
+                  Y(), L();
                 }
               : () => {
-                  V(), P(O);
+                  Y(), D(M);
                 }),
         i.appendChild(l);
     };
     r("id", e.id, "Customer Identification"),
       o.journeyChosen?.label &&
         r("journey", o.journeyChosen.label, null, () => {
-          o.backLockedUntilRestart || Z();
+          o.backLockedUntilRestart || Q();
         }),
-      r("serviceType", e.serviceType, "Service Type", () => ye("Service Type")),
-      r("service", e.service, "Service", () => ye("Service")),
-      r("location", e.location, "Location", () => P("Location")),
-      r("date", e.date, "Date", () => P("Date")),
-      r("time", e.time, "Time", () => P("Time")),
+      r("serviceType", e.serviceType, "Service Type", () => be("Service Type")),
+      r("service", e.service, "Service", () => be("Service")),
+      r("location", e.location, "Location", () => D("Location")),
+      r("date", e.date, "Date", () => D("Date")),
+      r("time", e.time, "Time", () => D("Time")),
       n.appendChild(i),
       w.appendChild(n);
   }
@@ -1127,7 +1121,7 @@
       t = (await k(n.optionValue || n.optionName, !1)).options || [];
     }
   }
-  function Se() {
+  function we() {
     const e = Pe(),
       t = Math.min(o.datesShown + 9, o.availableDates.length);
     for (let n = o.datesShown; n < t; n++) {
@@ -1135,21 +1129,21 @@
         i = document.createElement("button");
       (i.className = "date-btn"),
         (i.textContent = a),
-        (i.onclick = () => ee(a, a)),
+        (i.onclick = () => Z(a, a)),
         e.appendChild(i);
     }
     (o.datesShown = t),
-      o.datesShown < o.availableDates.length ? He(() => Se()) : Fe();
+      o.datesShown < o.availableDates.length ? He(() => we()) : Fe();
   }
   function yt(e) {
     const t = Array.isArray(e?.options) && e.options.length > 0;
-    return Y(e) && !t;
+    return W(e) && !t;
   }
   async function wt(e) {
     const t = o.pendingId || "";
     t &&
-      (Y(e) && c.chatInput && (c.chatInput.value = t),
-      yt(e) && (await ee(t, t)));
+      (W(e) && c.chatInput && (c.chatInput.value = t),
+      yt(e) && (await Z(t, t)));
   }
   function St(e = {}) {
     const t = e.hostId || "chat-widget";
@@ -1159,7 +1153,7 @@
       (n.id = t),
       (n.style.cssText = "width:360px;height:520px;border:1px solid #ddd;"),
       document.body.appendChild(n)),
-      de?.(e.lng || "en"),
+      le?.(e.lng || "en"),
       (o.lngCode = e.lng || "en"),
       ct?.({ ...e });
   }
@@ -1174,13 +1168,16 @@
   function Bt() {
     return {};
   }
-  (p.SendMessage = Lt),
-    (p.destroy = xt),
-    (p.getSnapshot = Bt),
-    (p.init = St),
-    (p.mount = kt),
-    (p.render = Ct),
-    (p.setLang = At),
-    (p.unmount = vt),
-    Object.defineProperty(p, Symbol.toStringTag, { value: "Module" });
-});
+  return (
+    (y.SendMessage = Lt),
+    (y.destroy = xt),
+    (y.getSnapshot = Bt),
+    (y.init = St),
+    (y.mount = kt),
+    (y.render = Ct),
+    (y.setLang = At),
+    (y.unmount = vt),
+    Object.defineProperty(y, Symbol.toStringTag, { value: "Module" }),
+    y
+  );
+})({});
