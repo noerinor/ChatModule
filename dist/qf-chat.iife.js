@@ -1,7 +1,624 @@
-var QFChat=function(w){"use strict";const Ee="appsettings.json";let R=null;async function F(){if(R)return R;const e=await fetch(Ee,{cache:"no-store"});if(!e.ok)throw new Error(`config http error: ${e.status}`);return R=await e.json(),R}async function Ie(){const e=await F(),t=new URL(location.href).searchParams.get("api");if(t)return t;if(!e.apiUrl)throw new Error("appsettings.json: missing 'apiUrl'.");return String(e.apiUrl)}async function Ne(){const e=await F(),t=String(e.journeyCommandPrefix||"/select-journey-");return(e.journeys||[]).map(a=>a.id&&!a.command&&!a.value?{label:a.label,value:`${t}${a.id}`,defaultLng:a.defaultLng||a.defaultLanguage||"en"}:{label:a.label,value:a.command||a.value,defaultLng:a.defaultLng||a.defaultLanguage||"en"}).filter(a=>a.label&&a.value)}async function Te(){const e=await F(),t=(n,a=[])=>new Set((Array.isArray(n)?n:a).map(i=>String(i).toLowerCase()));return{restart:t(e.commands?.restart,["/restart"]),end:t(e.commands?.end,["/endjourney"]),cancel:t(e.commands?.cancel,["/cancelapp"]),skip:t(e.commands?.skip,["/skip"]),loadMore:t(e.commands?.loadMore,["/loadmore"]),freeText:t(e.commands?.freeText,[])}}function je(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,e=>{const t=Math.random()*16|0;return(e==="x"?t:t&3|8).toString(16)})}const ie=["journey","customer identification","service type","service","location","question","details","date","time","set appointment","success"];function Oe(){const e=(navigator.language||navigator.userLanguage||"en").toLowerCase(),[t]=e.split("-");return t||"en"}let re=localStorage.getItem("sessionId")||(crypto?.randomUUID?.()??je());localStorage.setItem("sessionId",re);const o={isAuthPhase:!0,lastScreenWasAuthLike:!1,currentStepName:"",lngCode:Oe(),backLockedUntilRestart:!1,chipsLocked:!1,availableDates:[],datesShown:0,JOURNEYS:[],journeyChosen:null,pendingId:"",atInitialAuthScreen:!1,availableSteps:new Set,journeyOrder:[],selection:{id:"",serviceType:"",service:"",location:"",date:"",time:""},commands:{restart:new Set,end:new Set,cancel:new Set,skip:new Set,loadMore:new Set}};function Me(){o.selection.serviceType="",o.selection.service="",o.selection.location="",o.selection.date="",o.selection.time=""}function se(){o.availableSteps=new Set,o.journeyOrder=[],o.availableDates=[],o.datesShown=0}function Ue(){Object.assign(o.selection,{id:"",serviceType:"",service:"",location:"",date:"",time:""})}function ce(){o.backLockedUntilRestart=!0}function q(){o.backLockedUntilRestart=!1}function le(){o.chipsLocked=!0}function de(){o.chipsLocked=!1}function ue(){Ue(),se(),o.journeyChosen=null,o.pendingId="",o.currentStepName="",q(),de()}function Mt(){ue(),o.selection.id=""}function Ut(e=[]){if(!Array.isArray(e)||e.length===0)return 0;const t=e.findIndex(n=>!n?.stepAnswer);return t===-1?e.length-1:t}function $e(){return o.backLockedUntilRestart?!1:!!o.journeyChosen}let fe="./locales",N=!0;function $t(e){typeof e=="string"&&e.trim()&&(fe=e.replace(/\/+$/,""))}function Rt(e){N=!!e}const m=Object.create(null);let g=Re(),f="en";function A(e){const t=String(e||"en").toLowerCase().split("-")[0].trim();return t==="iw"?"he":t==="ua"?"uk":t||"en"}function Re(){try{const e=navigator.languages&&navigator.languages[0]||navigator.language||"en";return A(e)}catch{return"en"}}async function T(e){const t=A(e);if(m[t])return m[t];try{const n=await fetch(`${fe}/chatbot.${t}.json`,{cache:"no-store"});if(!n.ok)throw new Error(`HTTP ${n.status}`);const a=await n.json();return m[t]=a,a}catch(n){return N&&console.warn(`[localization] Missing language file "${t}" (${n.message}).`),m[t]={},m[t]}}function B(e,t){return String(t||"").split(".").reduce((n,a)=>n&&a in n?n[a]:void 0,e)}function J(e){try{const t=A(e),n=Intl?.Locale&&new Intl.Locale(t).textInfo?.direction||(["ar","fa","he","ur"].includes(t)?"rtl":"ltr");document.documentElement.dir=n||"ltr"}catch{document.documentElement.dir="ltr"}}async function pe(e){e&&(g=A(e));const t=[T("en"),T(g)];f&&f!=="en"&&f!==g&&t.push(T(f)),await Promise.all(t),J(g||f||"en")}function z(){return g}function _e(e){g=A(e),J(g)}async function De(e){f=A(e||"en"),await T(f),J(g||f)}async function Pe(e){await T(e)}function l(e){let t;return t=B(m[g]||{},e),t!==void 0?t:(t=B(m[f]||{},e),t!==void 0?(N&&console.warn(`[localization] Missing "${e}" for "${g}", used journey default "${f}".`),t):(t=B(m.en||{},e),t!==void 0?(N&&console.warn(`[localization] Missing "${e}" for "${g}" and "${f}", used "en".`),t):(N&&console.warn(`[localization] Missing key "${e}" in all languages.`),e)))}function He(e,t){const n=String(t||"en").toLowerCase().split("-")[0];let a=B(m[n]||{},e);return a!==void 0||(a=B(m[f]||{},e),a!==void 0)||(a=B(m.en||{},e),a!==void 0)?a:e}const x=e=>String(e||"").toLowerCase().trim();let j={lang:null,steps:{},hereRegex:null,ignoreSet:new Set};function V(){const e=z();if(j.lang===e&&j.hereRegex)return j;const t=l("aliases.steps"),n=l("aliases.here"),a=l("aliases.ignore"),i={"customer identification":["customer identification","customer authentication","new customer"],"service type":["service type","service types"],service:["service","services","select service"],location:["location"],details:["details"],date:["date"],time:["time"],"set appointment":["set appointment","book appointment"],success:["success"]},r={},s=typeof t=="object"&&t?t:{};for(const I of Object.keys(i)){const Ot=Array.isArray(s[I])?s[I]:[];r[I]=[...new Set([...Ot||[],...i[I]])]}const $=`^(${(Array.isArray(n)&&n.length?n:["you are here","вы здесь","ви тут","אתה כאן","את כאן","אתם כאן"]).map(I=>I.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")})\\s*:\\s*`,E=new RegExp($,"i"),p=["cancelling option","опция отмены"],y=Array.isArray(a)?a:[],oe=new Set([...p.map(x),...y.map(x)]);return j={lang:e,steps:r,hereRegex:E,ignoreSet:oe},j}function h(e){const{steps:t,hereRegex:n}=V(),a=x(String(e||"").replace(n,""));if(!a)return"";for(const[i,r]of Object.entries(t))if(r.some(s=>a.includes(x(s))))return i;return a}function W(e){const t=h(e),a=(Array.isArray(o.journeyOrder)?o.journeyOrder:[]).indexOf(t);if(a!==-1)return a;const i=ie.indexOf(t);return i===-1?999:500+i}function Y(e){const{hereRegex:t}=V(),n=e?.journeyMap||[],a=n.find(r=>t.test(r?.stepName||""));if(a)return h(a.stepName);for(const r of n){const s=h(r.stepName||"");if(s)return s}const i=(e?.options||[]).map(r=>r.optionName||r);return i.some(r=>/^\d{2}\/\d{2}\/\d{4}$/.test(r))?"date":i.some(r=>/^\d{1,2}:\d{2}$/.test(r))?"time":x(e?.message||"").includes("services -")?"service":null}function Fe(e){const{hereRegex:t,ignoreSet:n}=V();o.availableSteps||(o.availableSteps=new Set),Array.isArray(o.journeyOrder)||(o.journeyOrder=[]);const i=(e?.journeyMap||[]).map(r=>String(r.stepName||"").replace(t,"").trim()).filter(r=>!n.has(x(r))).map(h).filter(r=>r);for(const r of i)o.availableSteps.add(r),o.journeyOrder.includes(r)||o.journeyOrder.push(r)}function qe(e){return Y(e)==="customer identification"}function Je(e){return Y(e)==="success"}function me(e){const n=String(e||"").replace(/<ol[\s\S]*?<\/ol>/gi,"").replace(/<ul[\s\S]*?<\/ul>/gi,"").replace(/<br\s*\/?>/gi,`
-`),a=document.createElement("div");return a.innerHTML=n,(a.textContent||a.innerText||"").replace(/\r/g,"").replace(/\n{3,}/g,`
+var QFChat = (function (w) {
+  "use strict";
+  const Ee = "appsettings.json";
+  let R = null;
+  async function F() {
+    if (R) return R;
+    const e = await fetch(Ee, { cache: "no-store" });
+    if (!e.ok) throw new Error(`config http error: ${e.status}`);
+    return (R = await e.json()), R;
+  }
+  async function Ie() {
+    const e = await F(),
+      t = new URL(location.href).searchParams.get("api");
+    if (t) return t;
+    if (!e.apiUrl) throw new Error("appsettings.json: missing 'apiUrl'.");
+    return String(e.apiUrl);
+  }
+  async function Ne() {
+    const e = await F(),
+      t = String(e.journeyCommandPrefix || "/select-journey-");
+    return (e.journeys || [])
+      .map((a) =>
+        a.id && !a.command && !a.value
+          ? {
+              label: a.label,
+              value: `${t}${a.id}`,
+              defaultLng: a.defaultLng || a.defaultLanguage || "en",
+            }
+          : {
+              label: a.label,
+              value: a.command || a.value,
+              defaultLng: a.defaultLng || a.defaultLanguage || "en",
+            }
+      )
+      .filter((a) => a.label && a.value);
+  }
+  async function Te() {
+    const e = await F(),
+      t = (n, a = []) =>
+        new Set((Array.isArray(n) ? n : a).map((i) => String(i).toLowerCase()));
+    return {
+      restart: t(e.commands?.restart, ["/restart"]),
+      end: t(e.commands?.end, ["/endjourney"]),
+      cancel: t(e.commands?.cancel, ["/cancelapp"]),
+      skip: t(e.commands?.skip, ["/skip"]),
+      loadMore: t(e.commands?.loadMore, ["/loadmore"]),
+      freeText: t(e.commands?.freeText, []),
+    };
+  }
+  function je() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (e) => {
+      const t = (Math.random() * 16) | 0;
+      return (e === "x" ? t : (t & 3) | 8).toString(16);
+    });
+  }
+  const ie = [
+    "journey",
+    "customer identification",
+    "service type",
+    "service",
+    "location",
+    "question",
+    "details",
+    "date",
+    "time",
+    "set appointment",
+    "success",
+  ];
+  function Oe() {
+    const e = (
+        navigator.language ||
+        navigator.userLanguage ||
+        "en"
+      ).toLowerCase(),
+      [t] = e.split("-");
+    return t || "en";
+  }
+  let re =
+    localStorage.getItem("sessionId") || (crypto?.randomUUID?.() ?? je());
+  localStorage.setItem("sessionId", re);
+  const o = {
+    isAuthPhase: !0,
+    lastScreenWasAuthLike: !1,
+    currentStepName: "",
+    lngCode: Oe(),
+    backLockedUntilRestart: !1,
+    chipsLocked: !1,
+    availableDates: [],
+    datesShown: 0,
+    JOURNEYS: [],
+    journeyChosen: null,
+    pendingId: "",
+    atInitialAuthScreen: !1,
+    availableSteps: new Set(),
+    journeyOrder: [],
+    selection: {
+      id: "",
+      serviceType: "",
+      service: "",
+      location: "",
+      date: "",
+      time: "",
+    },
+    commands: {
+      restart: new Set(),
+      end: new Set(),
+      cancel: new Set(),
+      skip: new Set(),
+      loadMore: new Set(),
+    },
+  };
+  function Me() {
+    (o.selection.serviceType = ""),
+      (o.selection.service = ""),
+      (o.selection.location = ""),
+      (o.selection.date = ""),
+      (o.selection.time = "");
+  }
+  function se() {
+    (o.availableSteps = new Set()),
+      (o.journeyOrder = []),
+      (o.availableDates = []),
+      (o.datesShown = 0);
+  }
+  function Ue() {
+    Object.assign(o.selection, {
+      id: "",
+      serviceType: "",
+      service: "",
+      location: "",
+      date: "",
+      time: "",
+    });
+  }
+  function ce() {
+    o.backLockedUntilRestart = !0;
+  }
+  function q() {
+    o.backLockedUntilRestart = !1;
+  }
+  function le() {
+    o.chipsLocked = !0;
+  }
+  function de() {
+    o.chipsLocked = !1;
+  }
+  function ue() {
+    Ue(),
+      se(),
+      (o.journeyChosen = null),
+      (o.pendingId = ""),
+      (o.currentStepName = ""),
+      q(),
+      de();
+  }
+  function Mt() {
+    ue(), (o.selection.id = "");
+  }
+  function Ut(e = []) {
+    if (!Array.isArray(e) || e.length === 0) return 0;
+    const t = e.findIndex((n) => !n?.stepAnswer);
+    return t === -1 ? e.length - 1 : t;
+  }
+  function $e() {
+    return o.backLockedUntilRestart ? !1 : !!o.journeyChosen;
+  }
+  let fe = "./locales",
+    N = !0;
+  function $t(e) {
+    typeof e == "string" && e.trim() && (fe = e.replace(/\/+$/, ""));
+  }
+  function Rt(e) {
+    N = !!e;
+  }
+  const m = Object.create(null);
+  let g = Re(),
+    f = "en";
+  function A(e) {
+    const t = String(e || "en")
+      .toLowerCase()
+      .split("-")[0]
+      .trim();
+    return t === "iw" ? "he" : t === "ua" ? "uk" : t || "en";
+  }
+  function Re() {
+    try {
+      const e =
+        (navigator.languages && navigator.languages[0]) ||
+        navigator.language ||
+        "en";
+      return A(e);
+    } catch {
+      return "en";
+    }
+  }
+  async function T(e) {
+    const t = A(e);
+    if (m[t]) return m[t];
+    try {
+      const n = await fetch(`${fe}/chatbot.${t}.json`, { cache: "no-store" });
+      if (!n.ok) throw new Error(`HTTP ${n.status}`);
+      const a = await n.json();
+      return (m[t] = a), a;
+    } catch (n) {
+      return (
+        N &&
+          console.warn(
+            `[localization] Missing language file "${t}" (${n.message}).`
+          ),
+        (m[t] = {}),
+        m[t]
+      );
+    }
+  }
+  function B(e, t) {
+    return String(t || "")
+      .split(".")
+      .reduce((n, a) => (n && a in n ? n[a] : void 0), e);
+  }
+  function J(e) {
+    try {
+      const t = A(e),
+        n =
+          (Intl?.Locale && new Intl.Locale(t).textInfo?.direction) ||
+          (["ar", "fa", "he", "ur"].includes(t) ? "rtl" : "ltr");
+      document.documentElement.dir = n || "ltr";
+    } catch {
+      document.documentElement.dir = "ltr";
+    }
+  }
+  async function pe(e) {
+    e && (g = A(e));
+    const t = [T("en"), T(g)];
+    f && f !== "en" && f !== g && t.push(T(f)),
+      await Promise.all(t),
+      J(g || f || "en");
+  }
+  function z() {
+    return g;
+  }
+  function _e(e) {
+    (g = A(e)), J(g);
+  }
+  async function De(e) {
+    (f = A(e || "en")), await T(f), J(g || f);
+  }
+  async function Pe(e) {
+    await T(e);
+  }
+  function l(e) {
+    let t;
+    return (
+      (t = B(m[g] || {}, e)),
+      t !== void 0
+        ? t
+        : ((t = B(m[f] || {}, e)),
+          t !== void 0
+            ? (N &&
+                console.warn(
+                  `[localization] Missing "${e}" for "${g}", used journey default "${f}".`
+                ),
+              t)
+            : ((t = B(m.en || {}, e)),
+              t !== void 0
+                ? (N &&
+                    console.warn(
+                      `[localization] Missing "${e}" for "${g}" and "${f}", used "en".`
+                    ),
+                  t)
+                : (N &&
+                    console.warn(
+                      `[localization] Missing key "${e}" in all languages.`
+                    ),
+                  e)))
+    );
+  }
+  function He(e, t) {
+    const n = String(t || "en")
+      .toLowerCase()
+      .split("-")[0];
+    let a = B(m[n] || {}, e);
+    return a !== void 0 ||
+      ((a = B(m[f] || {}, e)), a !== void 0) ||
+      ((a = B(m.en || {}, e)), a !== void 0)
+      ? a
+      : e;
+  }
+  const x = (e) =>
+    String(e || "")
+      .toLowerCase()
+      .trim();
+  let j = { lang: null, steps: {}, hereRegex: null, ignoreSet: new Set() };
+  function V() {
+    const e = z();
+    if (j.lang === e && j.hereRegex) return j;
+    const t = l("aliases.steps"),
+      n = l("aliases.here"),
+      a = l("aliases.ignore"),
+      i = {
+        "customer identification": [
+          "customer identification",
+          "customer authentication",
+          "new customer",
+        ],
+        "service type": ["service type", "service types"],
+        service: ["service", "services", "select service"],
+        location: ["location"],
+        details: ["details"],
+        date: ["date"],
+        time: ["time"],
+        "set appointment": ["set appointment", "book appointment"],
+        success: ["success"],
+      },
+      r = {},
+      s = typeof t == "object" && t ? t : {};
+    for (const I of Object.keys(i)) {
+      const Ot = Array.isArray(s[I]) ? s[I] : [];
+      r[I] = [...new Set([...(Ot || []), ...i[I]])];
+    }
+    const $ = `^(${(Array.isArray(n) && n.length
+        ? n
+        : ["you are here", "вы здесь", "ви тут", "אתה כאן", "את כאן", "אתם כאן"]
+      )
+        .map((I) => I.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .join("|")})\\s*:\\s*`,
+      E = new RegExp($, "i"),
+      p = ["cancelling option", "опция отмены"],
+      y = Array.isArray(a) ? a : [],
+      oe = new Set([...p.map(x), ...y.map(x)]);
+    return (j = { lang: e, steps: r, hereRegex: E, ignoreSet: oe }), j;
+  }
+  function h(e) {
+    const { steps: t, hereRegex: n } = V(),
+      a = x(String(e || "").replace(n, ""));
+    if (!a) return "";
+    for (const [i, r] of Object.entries(t))
+      if (r.some((s) => a.includes(x(s)))) return i;
+    return a;
+  }
+  function W(e) {
+    const t = h(e),
+      a = (Array.isArray(o.journeyOrder) ? o.journeyOrder : []).indexOf(t);
+    if (a !== -1) return a;
+    const i = ie.indexOf(t);
+    return i === -1 ? 999 : 500 + i;
+  }
+  function Y(e) {
+    const { hereRegex: t } = V(),
+      n = e?.journeyMap || [],
+      a = n.find((r) => t.test(r?.stepName || ""));
+    if (a) return h(a.stepName);
+    for (const r of n) {
+      const s = h(r.stepName || "");
+      if (s) return s;
+    }
+    const i = (e?.options || []).map((r) => r.optionName || r);
+    return i.some((r) => /^\d{2}\/\d{2}\/\d{4}$/.test(r))
+      ? "date"
+      : i.some((r) => /^\d{1,2}:\d{2}$/.test(r))
+      ? "time"
+      : x(e?.message || "").includes("services -")
+      ? "service"
+      : null;
+  }
+  function Fe(e) {
+    const { hereRegex: t, ignoreSet: n } = V();
+    o.availableSteps || (o.availableSteps = new Set()),
+      Array.isArray(o.journeyOrder) || (o.journeyOrder = []);
+    const i = (e?.journeyMap || [])
+      .map((r) =>
+        String(r.stepName || "")
+          .replace(t, "")
+          .trim()
+      )
+      .filter((r) => !n.has(x(r)))
+      .map(h)
+      .filter((r) => r);
+    for (const r of i)
+      o.availableSteps.add(r),
+        o.journeyOrder.includes(r) || o.journeyOrder.push(r);
+  }
+  function qe(e) {
+    return Y(e) === "customer identification";
+  }
+  function Je(e) {
+    return Y(e) === "success";
+  }
+  function me(e) {
+    const n = String(e || "")
+        .replace(/<ol[\s\S]*?<\/ol>/gi, "")
+        .replace(/<ul[\s\S]*?<\/ul>/gi, "")
+        .replace(
+          /<br\s*\/?>/gi,
+          `
+`
+        ),
+      a = document.createElement("div");
+    return (
+      (a.innerHTML = n),
+      (a.textContent || a.innerText || "")
+        .replace(/\r/g, "")
+        .replace(
+          /\n{3,}/g,
+          `
 
-`).trim()}function ze(e){e&&(e.scrollTop=e.scrollHeight)}function Ve(e,t){if(!e||!t)return;const n=Array.isArray(e.journeyMap)?e.journeyMap:[];for(const{stepName:a,stepAnswer:i}of n)if(i)switch(h(a)){case"service type":t.serviceType=i;break;case"service":t.service=i;break;case"location":t.location=i;break;case"date":t.date=i;break;case"time":t.time=i;break}}let _={lang:null,enterIdPhrases:[]};function We(){const e=z();if(_.lang===e)return _;let t=l("detect.auth.enterId");return(!Array.isArray(t)||t.length===0)&&(t=["enter your id","please enter your id","id must hold digits only"]),_={lang:e,enterIdPhrases:t.filter(Boolean)},_}function X(e){if(qe(e))return!0;if(!(!Array.isArray(e?.options)||e.options.length===0))return!1;const n=x(me(e?.message||"")),{enterIdPhrases:a}=We();return a.some(i=>n.includes(x(i)))}function _t(e){return(Array.isArray(e?.options)?e.options:[]).some(n=>{const a=n?.optionValue??n,i=n?.optionName??n;return he(o.commands.skip,a,i)||he(o.commands.freeText,a,i)})}const ge=e=>String(e||"").toLowerCase().replace(/\s+/g," ").trim(),he=(e,...t)=>{if(!e)return!1;for(const n of t){const a=ge(n);if(!a)continue;const i=a.split(/[|,;]+/).map(r=>r.trim());for(const r of e){const s=ge(r);if(a===s||a.includes(s)||i.includes(s))return!0}}return!1};function Dt(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}const Ye=25e3;async function k(e,t){const n=await Ie(),a=new AbortController,i=setTimeout(()=>a.abort(),Ye);try{const r=await fetch(n,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify([{SessionId:re,Message:e,ClearCache:!!t,LngCode:z()}]),signal:a.signal});if(!r.ok){const u=await r.text().catch(()=>"");throw new Error(`Network error (${r.status})${u?` — ${u}`:""}`)}const s=await r.json().catch(()=>null);if(s==null)throw new Error("Empty response");return Array.isArray(s)?s[0]:s}catch(r){throw r.name==="AbortError"?new Error("Network timeout"):r}finally{clearTimeout(i)}}const c={toggleButton:document.getElementById("chat-toggle"),chatWidget:document.getElementById("chat-widget"),chatHeader:document.getElementById("chat-header"),chatBody:document.getElementById("chat-body"),chatInput:document.getElementById("chat-input"),sendButton:document.getElementById("chat-send"),backButton:document.getElementById("chat-back"),closeButton:document.getElementById("chat-close"),inputArea:document.getElementById("chat-input-area")};function Xe(){c.backButton&&(c.backButton.textContent=l("ui.back")),c.sendButton&&(c.sendButton.textContent=l("ui.send"))}const S=document.createElement("div");S.id="summary-bar",S.style.display="none";const d=document.createElement("div");d.id="content-area",Ke(),c.chatBody.appendChild(d);function Ke(){!S.isConnected&&c.chatWidget&&c.chatBody&&c.chatWidget.insertBefore(S,c.chatBody)}function O(e,{replace:t=!1}={}){G();const n=U();t&&(n.innerHTML="");const a=document.createElement("div");a.className="bubble bot",a.innerHTML=String(e??""),n.appendChild(a),v()}function Pt(){O(l("msg.localAuth"),{replace:!0})}function be(e,t){G();const n=document.createElement("div");n.className="options-list",e.forEach(a=>{const i=a.optionName||a,r=a.optionValue||i,s=document.createElement("button");s.className="option-btn"+(r==="/goBack"?" option-btn-back":""),s.textContent=me(i),s.onclick=()=>t(r,i),n.appendChild(s)}),d.appendChild(n)}function Ge(){let e=d.querySelector("#date-list");if(!e){const t=document.createElement("div");d.appendChild(t),e=document.createElement("div"),e.id="date-list",e.className="date-list",d.appendChild(e)}return e}function Qe(e){let t=d.querySelector("#load-more-btn");t||(t=document.createElement("button"),t.id="load-more-btn",t.className="load-more",t.textContent=l("ui.loadMore"),t.onclick=e,d.appendChild(t))}function Ze(){const e=d.querySelector("#load-more-btn");e&&e.remove()}function D(e){c.backButton.style.display=e?"inline-block":"none"}function M(e){c.inputArea.style.display=e?"flex":"none"}function P(){document.querySelectorAll(".option-btn, .date-btn, .load-more").forEach(e=>{e.disabled=!0,e.classList.add("disabled")})}function v(){ze(c.chatBody)}let Ht=null,ye=!1;function et(){if(ye)return;const e=document.createElement("style");e.textContent=`
+`
+        )
+        .trim()
+    );
+  }
+  function ze(e) {
+    e && (e.scrollTop = e.scrollHeight);
+  }
+  function Ve(e, t) {
+    if (!e || !t) return;
+    const n = Array.isArray(e.journeyMap) ? e.journeyMap : [];
+    for (const { stepName: a, stepAnswer: i } of n)
+      if (i)
+        switch (h(a)) {
+          case "service type":
+            t.serviceType = i;
+            break;
+          case "service":
+            t.service = i;
+            break;
+          case "location":
+            t.location = i;
+            break;
+          case "date":
+            t.date = i;
+            break;
+          case "time":
+            t.time = i;
+            break;
+        }
+  }
+  let _ = { lang: null, enterIdPhrases: [] };
+  function We() {
+    const e = z();
+    if (_.lang === e) return _;
+    let t = l("detect.auth.enterId");
+    return (
+      (!Array.isArray(t) || t.length === 0) &&
+        (t = [
+          "enter your id",
+          "please enter your id",
+          "id must hold digits only",
+        ]),
+      (_ = { lang: e, enterIdPhrases: t.filter(Boolean) }),
+      _
+    );
+  }
+  function X(e) {
+    if (qe(e)) return !0;
+    if (!(!Array.isArray(e?.options) || e.options.length === 0)) return !1;
+    const n = x(me(e?.message || "")),
+      { enterIdPhrases: a } = We();
+    return a.some((i) => n.includes(x(i)));
+  }
+  function _t(e) {
+    return (Array.isArray(e?.options) ? e.options : []).some((n) => {
+      const a = n?.optionValue ?? n,
+        i = n?.optionName ?? n;
+      return he(o.commands.skip, a, i) || he(o.commands.freeText, a, i);
+    });
+  }
+  const ge = (e) =>
+      String(e || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim(),
+    he = (e, ...t) => {
+      if (!e) return !1;
+      for (const n of t) {
+        const a = ge(n);
+        if (!a) continue;
+        const i = a.split(/[|,;]+/).map((r) => r.trim());
+        for (const r of e) {
+          const s = ge(r);
+          if (a === s || a.includes(s) || i.includes(s)) return !0;
+        }
+      }
+      return !1;
+    };
+  function Dt(e) {
+    return String(e ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  const Ye = 25e3;
+  async function k(e, t) {
+    const n = await Ie(),
+      a = new AbortController(),
+      i = setTimeout(() => a.abort(), Ye);
+    try {
+      const r = await fetch(n, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([
+          { SessionId: re, Message: e, ClearCache: !!t, LngCode: z() },
+        ]),
+        signal: a.signal,
+      });
+      if (!r.ok) {
+        const u = await r.text().catch(() => "");
+        throw new Error(`Network error (${r.status})${u ? ` — ${u}` : ""}`);
+      }
+      const s = await r.json().catch(() => null);
+      if (s == null) throw new Error("Empty response");
+      return Array.isArray(s) ? s[0] : s;
+    } catch (r) {
+      throw r.name === "AbortError" ? new Error("Network timeout") : r;
+    } finally {
+      clearTimeout(i);
+    }
+  }
+  const c = {
+    toggleButton: document.getElementById("chat-toggle"),
+    chatWidget: document.getElementById("chat-widget"),
+    chatHeader: document.getElementById("chat-header"),
+    chatBody: document.getElementById("chat-body"),
+    chatInput: document.getElementById("chat-input"),
+    sendButton: document.getElementById("chat-send"),
+    backButton: document.getElementById("chat-back"),
+    closeButton: document.getElementById("chat-close"),
+    inputArea: document.getElementById("chat-input-area"),
+  };
+  function Xe() {
+    c.backButton && (c.backButton.textContent = l("ui.back")),
+      c.sendButton && (c.sendButton.textContent = l("ui.send"));
+  }
+  const S = document.createElement("div");
+  (S.id = "summary-bar"), (S.style.display = "none");
+  const d = document.createElement("div");
+  (d.id = "content-area"), Ke(), c.chatBody.appendChild(d);
+  function Ke() {
+    !S.isConnected &&
+      c.chatWidget &&
+      c.chatBody &&
+      c.chatWidget.insertBefore(S, c.chatBody);
+  }
+  function O(e, { replace: t = !1 } = {}) {
+    G();
+    const n = U();
+    t && (n.innerHTML = "");
+    const a = document.createElement("div");
+    (a.className = "bubble bot"),
+      (a.innerHTML = String(e ?? "")),
+      n.appendChild(a),
+      v();
+  }
+  function Pt() {
+    O(l("msg.localAuth"), { replace: !0 });
+  }
+  function be(e, t) {
+    G();
+    const n = document.createElement("div");
+    (n.className = "options-list"),
+      e.forEach((a) => {
+        const i = a.optionName || a,
+          r = a.optionValue || i,
+          s = document.createElement("button");
+        (s.className =
+          "option-btn" + (r === "/goBack" ? " option-btn-back" : "")),
+          (s.textContent = me(i)),
+          (s.onclick = () => t(r, i)),
+          n.appendChild(s);
+      }),
+      d.appendChild(n);
+  }
+  function Ge() {
+    let e = d.querySelector("#date-list");
+    if (!e) {
+      const t = document.createElement("div");
+      d.appendChild(t),
+        (e = document.createElement("div")),
+        (e.id = "date-list"),
+        (e.className = "date-list"),
+        d.appendChild(e);
+    }
+    return e;
+  }
+  function Qe(e) {
+    let t = d.querySelector("#load-more-btn");
+    t ||
+      ((t = document.createElement("button")),
+      (t.id = "load-more-btn"),
+      (t.className = "load-more"),
+      (t.textContent = l("ui.loadMore")),
+      (t.onclick = e),
+      d.appendChild(t));
+  }
+  function Ze() {
+    const e = d.querySelector("#load-more-btn");
+    e && e.remove();
+  }
+  function D(e) {
+    c.backButton.style.display = e ? "inline-block" : "none";
+  }
+  function M(e) {
+    c.inputArea.style.display = e ? "flex" : "none";
+  }
+  function P() {
+    document
+      .querySelectorAll(".option-btn, .date-btn, .load-more")
+      .forEach((e) => {
+        (e.disabled = !0), e.classList.add("disabled");
+      });
+  }
+  function v() {
+    ze(c.chatBody);
+  }
+  let Ht = null,
+    ye = !1;
+  function et() {
+    if (ye) return;
+    const e = document.createElement("style");
+    (e.textContent = `
 @keyframes cm-spin { to { transform: rotate(360deg) } }
 #cm-loader {
   display:flex; align-items:center; justify-content:center;
@@ -11,7 +628,15 @@ var QFChat=function(w){"use strict";const Ee="appsettings.json";let R=null;async
   width:28px; height:28px; border-radius:50%;
   border:3px solid rgba(0,0,0,.2); border-top-color: rgba(67, 38, 121, 0.9);
   animation: cm-spin 1s linear infinite;
-}`,document.head.appendChild(e),ye=!0}let we=!1;function tt(){if(we)return;const e=document.createElement("style");e.textContent=`
+}`),
+      document.head.appendChild(e),
+      (ye = !0);
+  }
+  let we = !1;
+  function tt() {
+    if (we) return;
+    const e = document.createElement("style");
+    (e.textContent = `
 #content-area .bubble.skeleton{
   align-self:flex-start;
   background:#f5f6f8;
@@ -58,7 +683,15 @@ var QFChat=function(w){"use strict";const Ee="appsettings.json";let R=null;async
 @keyframes sk-shine{
   0%{transform:translateX(-100%)} 100%{transform:translateX(100%)}
 }
-`,document.head.appendChild(e),we=!0}let Se=!1;function nt(){if(Se)return;const e=document.createElement("style");e.textContent=`
+`),
+      document.head.appendChild(e),
+      (we = !0);
+  }
+  let Se = !1;
+  function nt() {
+    if (Se) return;
+    const e = document.createElement("style");
+    (e.textContent = `
 #content-area .bubble.pending{
   align-self:flex-start;
   background:#f5f6f8; color:#0f2747;
@@ -77,7 +710,536 @@ var QFChat=function(w){"use strict";const Ee="appsettings.json";let R=null;async
 .pending .dot:nth-child(2){ animation-delay:.15s }
 .pending .dot:nth-child(3){ animation-delay:.30s }
 @keyframes cm-typing{ 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-2px);opacity:.95} }
-`,document.head.appendChild(e),Se=!0}let b=null;function K(e=""){if(nt(),b&&b.isConnected)return b;const t=U();return b=document.createElement("div"),b.className="bubble pending",b.innerHTML=`
+`),
+      document.head.appendChild(e),
+      (Se = !0);
+  }
+  let b = null;
+  function K(e = "") {
+    if ((nt(), b && b.isConnected)) return b;
+    const t = U();
+    return (
+      (b = document.createElement("div")),
+      (b.className = "bubble pending"),
+      (b.innerHTML = `
     <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-    <span>${e||typeof l=="function"&&l("ui.loading")||"Loading…"}</span>
-  `,t.appendChild(b),v(),b}function xe(){b&&(b.remove(),b=null)}function at(e){et(),G();const t=document.createElement("div");t.id="cm-loader";const n=document.createElement("div");n.className="spinner";const a=document.createElement("div");a.textContent=e||typeof l=="function"&&l("ui.loading")||"Loading…",t.appendChild(n),t.appendChild(a),d.appendChild(t)}function ot(){const e=d.querySelector("#cm-loader");e&&e.remove()}function U(){let e=d.querySelector(".msg__text");return e||(d.innerHTML="",e=document.createElement("div"),e.className="msg__text",d.appendChild(e)),e}function it(){tt();const e=U(),t=["w100","w95","w80","w60"],n=document.createElement("div");return n.className="bubble skeleton",n.setAttribute("data-skel","1"),t.forEach(a=>{const i=document.createElement("div");i.className=`sk-row ${a}`,n.appendChild(i)}),e.appendChild(n),v(),n}function rt(e,t){return!t||!t.isConnected?!1:(t.className="bubble bot",t.innerHTML=String(e??""),t.removeAttribute("data-skel"),v(),!0)}function st(e){e&&e.isConnected&&e.remove()}function G(){d.querySelectorAll(".options-list, #date-list, #load-more-btn, #cm-loader").forEach(e=>e.remove())}function ct(e){const t=U(),n=document.createElement("div");n.className="bubble user",n.textContent=String(e??""),t.appendChild(n),v()}function Q(e){const t=U(),n=document.createElement("div");n.className="bubble bot",n.innerHTML=String(e??""),t.appendChild(n),v()}const ke=14,lt=3,dt=2;async function ut(e){const t=h(e),n=W(t);if(n===-1)return!1;let a=ke,i=0;for(;a-- >0;){const r=W(o.currentStepName||"");if(r!==-1&&r<=n)return!0;let s;try{s=await k("/goBack",!1)}catch{break}if(await L(s),W(o.currentStepName||"")>=r){if(++i>=dt)break}else i=0}return!1}const ft={service:"service type","service type":"location"};async function ve(e){let t=h(e);for(let n=0;n<lt&&t;n++){if(await ut(t))return;t=ft[t]}}async function H(e){const t=h(e);if(!t)return;let n=ke;for(;n-- >0&&h(o.currentStepName)!==t;){let a;try{a=await k("/goBack",!1)}catch{break}await L(a)}}const Z=e=>String(e||"").toLowerCase().replace(/\s+/g," ").trim(),C=(e,...t)=>{for(const n of t){const a=Z(n);if(!a)continue;const i=a.split(/[|,;]+/).map(r=>r.trim());for(const r of e)if(a===r||a.includes(r)||i.includes(r))return!0}return!1};function pt(){ue(),M(!1),D(!1),ee(),ae()}async function Ce(){await pe(),Xe(),mt(),ht()}function mt(){c.toggleButton.addEventListener("click",()=>{c.chatWidget.classList.add("open"),c.toggleButton.style.display="none"}),c.closeButton.addEventListener("click",e=>{e.stopPropagation(),c.chatWidget.classList.remove("open"),c.toggleButton.style.display="block"}),c.sendButton.addEventListener("click",Le),c.chatInput.addEventListener("keydown",e=>{e.key==="Enter"&&(e.preventDefault(),Le())}),c.backButton.addEventListener("click",gt)}async function gt(e){if(e?.preventDefault?.(),!o.backLockedUntilRestart){P(),K(l("ui.loading")||"Loading…");try{const t=await k("/goBack",!1);await L(t)}catch(t){xe(),O(String(t?.message||"Back failed"))}}}async function ht(){try{o.JOURNEYS=await Ne(),o.commands=await Te()}catch(e){console.error("Failed to load configuration:",e),o.JOURNEYS=[]}q(),o.journeyChosen=null,o.pendingId="",M(!0),D(!1),ae(),q(),de(),ee()}async function Le(e){e?.preventDefault?.();const t=c.chatInput.value.trim();if(!t)return;ct(t),c.chatInput.value="";let n=null;const a=setTimeout(()=>{n=it()},200);try{const i=await k(t,!1);clearTimeout(a),n?rt(i.message,n):Q(i.message),await L(i,{skipMessage:!0})}catch{clearTimeout(a),n&&st(n),Q("…connection error, please try again.")}}function ee(){if(O(""),d.innerHTML="",!o.JOURNEYS.length){O("No journeys configured. Please add them to appsettings.json.");return}be(o.JOURNEYS.map(e=>({optionName:e.label,optionValue:e.value})),()=>{}),d.querySelectorAll(".option-btn").forEach((e,t)=>{const n=o.JOURNEYS[t];e.onclick=()=>bt(n)})}async function bt(e){o.journeyChosen=e;const t=e.defaultLng||"en";await De(t),await Pe(t),Me(),se(),P();const n=He("ui.loading",t);at(n);try{const a=await k(e.value,!0);await L(a),await Ct(a)}catch(a){o.journeyChosen=null,M(!0),D(!1),ne(a.message)}finally{ot()}}async function te(e,t){if(C(o.commands.restart,e,t)){pt();return}if(C(o.commands.end,e,t)){ce(),le(),M(!1);return}if(C(o.commands.cancel,e,t)&&P(),e==="/goBack"){await wt();return}const n=o.currentStepName;try{const a=await k(e,!1);yt(n,t),await L(a)}catch(a){ne(a.message)}}function yt(e,t){if(!e||!t)return;switch(h(e)){case"customer identification":o.selection.id=t,o.pendingId="";break;case"service type":o.selection.serviceType=t;break;case"service":o.selection.service=t;break;case"location":o.selection.location=t;break;case"date":o.selection.date=t;break;case"time":o.selection.time=t;break;default:o.lastScreenWasAuthLike&&/^\d+$/.test(String(t))&&(o.selection.id=t,o.pendingId="");break}}async function wt(){P();try{const e=await k("/goBack",!1);await L(e)}catch(e){ne(e.message)}}function St(e){if(Je(e))return!0;const t=Array.isArray(e?.options)?e.options:[];return!t.length||!t.some(i=>C(o.commands.restart,i?.optionValue??i,i?.optionName??i))?!1:!t.some(i=>{const r=i?.optionValue??i,s=i?.optionName??i;return!(C(o.commands.restart,r,s)||C(o.commands.cancel,r,s)||Z(r)==="/goback"||Z(s)==="/goback")})}async function L(e,t={}){xe();const{skipMessage:n=!1}=t;o.currentStepName=Y(e)||o.currentStepName||"",Fe(e),Ve(e,o.selection);const a=X(e),i=St(e);M(!i),o.lastScreenWasAuthLike=a,a&&o.pendingId&&c.chatInput&&!c.chatInput.value&&(c.chatInput.value=o.pendingId),i&&(ce(),le());const r=e.journeyMap||[],s=$e(r)&&!i;D(s),xt(o.currentStepName),ae(),n||O(e.message);const u=Array.isArray(e.options)?e.options:[],$=y=>/^\d{2}\/\d{2}\/\d{4}$/.test(y.optionName||y),E=u.filter($),p=u.filter(y=>!C(o.commands.end,y?.optionValue??y,y?.optionName??y));E.length?(await kt(u),o.datesShown=0,Ae()):p.length&&be(p,(y,oe)=>te(y,oe)),v()}function ne(e){const t=e?.message?String(e.message):String(e||"Unknown error");Q(t),v()}function xt(e){if(!e||o.availableSteps.size===0)return;o.availableSteps.has("service type")||(o.selection.serviceType=""),o.availableSteps.has("service")||(o.selection.service=""),o.availableSteps.has("location")||(o.selection.location=""),o.availableSteps.has("date")||(o.selection.date=""),o.availableSteps.has("time")||(o.selection.time="");const t=ie.filter(r=>o.availableSteps.has(r)),n=h(e),a=t.indexOf(n);if(a===-1)return;const i={id:"customer identification",serviceType:"service type",service:"service",location:"location",date:"date",time:"time"};for(const[r,s]of Object.entries(i)){const u=t.indexOf(s);u!==-1&&u>=a&&(o.selection[r]="")}}function ae(){const e=o.selection;if(!(!!o.journeyChosen?.label||e.id||e.serviceType||e.service||e.location||e.date||e.time)){S.style.display="none",S.innerHTML="";return}S.style.display="block",S.innerHTML="";const n=document.createElement("div");n.className="summary-card";const a=document.createElement("div");a.className="summary-title",a.textContent=l("chipsTitle")||"Your selection",n.appendChild(a);const i=document.createElement("div");i.className="summary-chips";const r=(s,u,$,E)=>{if(!u)return;const p=document.createElement("button");p.className="chip",p.title=l("chipChange")||"Change",p.textContent=`${l(`chips.${s}`)}: ${u}`,o.backLockedUntilRestart||o.chipsLocked?(p.disabled=!0,p.classList.add("disabled")):p.onclick=E?()=>{K(),E()}:()=>{K(),H($)},i.appendChild(p)};r("id",e.id,"Customer Identification"),o.journeyChosen?.label&&r("journey",o.journeyChosen.label,null,()=>{o.backLockedUntilRestart||ee()}),r("serviceType",e.serviceType,"Service Type",()=>ve("Service Type")),r("service",e.service,"Service",()=>ve("Service")),r("location",e.location,"Location",()=>H("Location")),r("date",e.date,"Date",()=>H("Date")),r("time",e.time,"Time",()=>H("Time")),n.appendChild(i),S.appendChild(n)}async function kt(e){let t=e;for(o.availableDates=[];;){o.availableDates.push(...t.map(i=>i.optionName||i).filter(i=>/^\d{2}\/\d{2}\/\d{4}$/.test(i)));const n=t.find(i=>{const r=String(i.optionValue??i).toLowerCase();if(o.commands.loadMore.has(r))return!0;const s=String(i.optionName||i).toLowerCase(),u=String(l("ui.loadMore")||"").toLowerCase();return u&&s===u});if(!n)break;t=(await k(n.optionValue||n.optionName,!1)).options||[]}}function Ae(){const e=Ge(),t=Math.min(o.datesShown+9,o.availableDates.length);for(let n=o.datesShown;n<t;n++){const a=o.availableDates[n],i=document.createElement("button");i.className="date-btn",i.textContent=a,i.onclick=()=>te(a,a),e.appendChild(i)}o.datesShown=t,o.datesShown<o.availableDates.length?Qe(()=>Ae()):Ze()}function vt(e){const t=Array.isArray(e?.options)&&e.options.length>0;return X(e)&&!t}async function Ct(e){const t=o.pendingId||"";t&&(X(e)&&c.chatInput&&(c.chatInput.value=t),vt(e)&&await te(t,t))}Ce();const Be=pe;function Lt(e={}){const t=e.hostId||"chat-widget";let n=document.getElementById(t);n||(n=document.createElement("div"),n.id=t,n.style.cssText="width:360px;height:520px;border:1px solid #ddd;",document.body.appendChild(n));const a=n,i=e.lng||"en";typeof Be=="function"&&Be(i),o&&(o.lngCode=i),Ce?.({root:a,...e})}function At(){}function Bt(e,t){}function Et(){}function It(...e){}function Nt(...e){}function Tt(e){return _e?.(e)}function jt(){return{}}return w.SendMessage=Nt,w.destroy=At,w.getSnapshot=jt,w.init=Lt,w.mount=Bt,w.render=It,w.setLang=Tt,w.unmount=Et,Object.defineProperty(w,Symbol.toStringTag,{value:"Module"}),w}({});
+    <span>${
+      e || (typeof l == "function" && l("ui.loading")) || "Loading…"
+    }</span>
+  `),
+      t.appendChild(b),
+      v(),
+      b
+    );
+  }
+  function xe() {
+    b && (b.remove(), (b = null));
+  }
+  function at(e) {
+    et(), G();
+    const t = document.createElement("div");
+    t.id = "cm-loader";
+    const n = document.createElement("div");
+    n.className = "spinner";
+    const a = document.createElement("div");
+    (a.textContent =
+      e || (typeof l == "function" && l("ui.loading")) || "Loading…"),
+      t.appendChild(n),
+      t.appendChild(a),
+      d.appendChild(t);
+  }
+  function ot() {
+    const e = d.querySelector("#cm-loader");
+    e && e.remove();
+  }
+  function U() {
+    let e = d.querySelector(".msg__text");
+    return (
+      e ||
+        ((d.innerHTML = ""),
+        (e = document.createElement("div")),
+        (e.className = "msg__text"),
+        d.appendChild(e)),
+      e
+    );
+  }
+  function it() {
+    tt();
+    const e = U(),
+      t = ["w100", "w95", "w80", "w60"],
+      n = document.createElement("div");
+    return (
+      (n.className = "bubble skeleton"),
+      n.setAttribute("data-skel", "1"),
+      t.forEach((a) => {
+        const i = document.createElement("div");
+        (i.className = `sk-row ${a}`), n.appendChild(i);
+      }),
+      e.appendChild(n),
+      v(),
+      n
+    );
+  }
+  function rt(e, t) {
+    return !t || !t.isConnected
+      ? !1
+      : ((t.className = "bubble bot"),
+        (t.innerHTML = String(e ?? "")),
+        t.removeAttribute("data-skel"),
+        v(),
+        !0);
+  }
+  function st(e) {
+    e && e.isConnected && e.remove();
+  }
+  function G() {
+    d.querySelectorAll(
+      ".options-list, #date-list, #load-more-btn, #cm-loader"
+    ).forEach((e) => e.remove());
+  }
+  function ct(e) {
+    const t = U(),
+      n = document.createElement("div");
+    (n.className = "bubble user"),
+      (n.textContent = String(e ?? "")),
+      t.appendChild(n),
+      v();
+  }
+  function Q(e) {
+    const t = U(),
+      n = document.createElement("div");
+    (n.className = "bubble bot"),
+      (n.innerHTML = String(e ?? "")),
+      t.appendChild(n),
+      v();
+  }
+  const ke = 14,
+    lt = 3,
+    dt = 2;
+  async function ut(e) {
+    const t = h(e),
+      n = W(t);
+    if (n === -1) return !1;
+    let a = ke,
+      i = 0;
+    for (; a-- > 0; ) {
+      const r = W(o.currentStepName || "");
+      if (r !== -1 && r <= n) return !0;
+      let s;
+      try {
+        s = await k("/goBack", !1);
+      } catch {
+        break;
+      }
+      if ((await L(s), W(o.currentStepName || "") >= r)) {
+        if (++i >= dt) break;
+      } else i = 0;
+    }
+    return !1;
+  }
+  const ft = { service: "service type", "service type": "location" };
+  async function ve(e) {
+    let t = h(e);
+    for (let n = 0; n < lt && t; n++) {
+      if (await ut(t)) return;
+      t = ft[t];
+    }
+  }
+  async function H(e) {
+    const t = h(e);
+    if (!t) return;
+    let n = ke;
+    for (; n-- > 0 && h(o.currentStepName) !== t; ) {
+      let a;
+      try {
+        a = await k("/goBack", !1);
+      } catch {
+        break;
+      }
+      await L(a);
+    }
+  }
+  const Z = (e) =>
+      String(e || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim(),
+    C = (e, ...t) => {
+      for (const n of t) {
+        const a = Z(n);
+        if (!a) continue;
+        const i = a.split(/[|,;]+/).map((r) => r.trim());
+        for (const r of e)
+          if (a === r || a.includes(r) || i.includes(r)) return !0;
+      }
+      return !1;
+    };
+  function pt() {
+    ue(), M(!1), D(!1), ee(), ae();
+  }
+  async function Ce() {
+    await pe(), Xe(), mt(), ht();
+  }
+  function mt() {
+    c.toggleButton.addEventListener("click", () => {
+      c.chatWidget.classList.add("open"),
+        (c.toggleButton.style.display = "none");
+    }),
+      c.closeButton.addEventListener("click", (e) => {
+        e.stopPropagation(),
+          c.chatWidget.classList.remove("open"),
+          (c.toggleButton.style.display = "block");
+      }),
+      c.sendButton.addEventListener("click", Le),
+      c.chatInput.addEventListener("keydown", (e) => {
+        e.key === "Enter" && (e.preventDefault(), Le());
+      }),
+      c.backButton.addEventListener("click", gt);
+  }
+  async function gt(e) {
+    if ((e?.preventDefault?.(), !o.backLockedUntilRestart)) {
+      P(), K(l("ui.loading") || "Loading…");
+      try {
+        const t = await k("/goBack", !1);
+        await L(t);
+      } catch (t) {
+        xe(), O(String(t?.message || "Back failed"));
+      }
+    }
+  }
+  async function ht() {
+    try {
+      (o.JOURNEYS = await Ne()), (o.commands = await Te());
+    } catch (e) {
+      console.error("Failed to load configuration:", e), (o.JOURNEYS = []);
+    }
+    q(),
+      (o.journeyChosen = null),
+      (o.pendingId = ""),
+      M(!0),
+      D(!1),
+      ae(),
+      q(),
+      de(),
+      ee();
+  }
+  async function Le(e) {
+    e?.preventDefault?.();
+    const t = c.chatInput.value.trim();
+    if (!t) return;
+    ct(t), (c.chatInput.value = "");
+    let n = null;
+    const a = setTimeout(() => {
+      n = it();
+    }, 200);
+    try {
+      const i = await k(t, !1);
+      clearTimeout(a),
+        n ? rt(i.message, n) : Q(i.message),
+        await L(i, { skipMessage: !0 });
+    } catch {
+      clearTimeout(a), n && st(n), Q("…connection error, please try again.");
+    }
+  }
+  function ee() {
+    if ((O(""), (d.innerHTML = ""), !o.JOURNEYS.length)) {
+      O("No journeys configured. Please add them to appsettings.json.");
+      return;
+    }
+    be(
+      o.JOURNEYS.map((e) => ({ optionName: e.label, optionValue: e.value })),
+      () => {}
+    ),
+      d.querySelectorAll(".option-btn").forEach((e, t) => {
+        const n = o.JOURNEYS[t];
+        e.onclick = () => bt(n);
+      });
+  }
+  async function bt(e) {
+    o.journeyChosen = e;
+    const t = e.defaultLng || "en";
+    await De(t), await Pe(t), Me(), se(), P();
+    const n = He("ui.loading", t);
+    at(n);
+    try {
+      const a = await k(e.value, !0);
+      await L(a), await Ct(a);
+    } catch (a) {
+      (o.journeyChosen = null), M(!0), D(!1), ne(a.message);
+    } finally {
+      ot();
+    }
+  }
+  async function te(e, t) {
+    if (C(o.commands.restart, e, t)) {
+      pt();
+      return;
+    }
+    if (C(o.commands.end, e, t)) {
+      ce(), le(), M(!1);
+      return;
+    }
+    if ((C(o.commands.cancel, e, t) && P(), e === "/goBack")) {
+      await wt();
+      return;
+    }
+    const n = o.currentStepName;
+    try {
+      const a = await k(e, !1);
+      yt(n, t), await L(a);
+    } catch (a) {
+      ne(a.message);
+    }
+  }
+  function yt(e, t) {
+    if (!e || !t) return;
+    switch (h(e)) {
+      case "customer identification":
+        (o.selection.id = t), (o.pendingId = "");
+        break;
+      case "service type":
+        o.selection.serviceType = t;
+        break;
+      case "service":
+        o.selection.service = t;
+        break;
+      case "location":
+        o.selection.location = t;
+        break;
+      case "date":
+        o.selection.date = t;
+        break;
+      case "time":
+        o.selection.time = t;
+        break;
+      default:
+        o.lastScreenWasAuthLike &&
+          /^\d+$/.test(String(t)) &&
+          ((o.selection.id = t), (o.pendingId = ""));
+        break;
+    }
+  }
+  async function wt() {
+    P();
+    try {
+      const e = await k("/goBack", !1);
+      await L(e);
+    } catch (e) {
+      ne(e.message);
+    }
+  }
+  function St(e) {
+    if (Je(e)) return !0;
+    const t = Array.isArray(e?.options) ? e.options : [];
+    return !t.length ||
+      !t.some((i) =>
+        C(o.commands.restart, i?.optionValue ?? i, i?.optionName ?? i)
+      )
+      ? !1
+      : !t.some((i) => {
+          const r = i?.optionValue ?? i,
+            s = i?.optionName ?? i;
+          return !(
+            C(o.commands.restart, r, s) ||
+            C(o.commands.cancel, r, s) ||
+            Z(r) === "/goback" ||
+            Z(s) === "/goback"
+          );
+        });
+  }
+  async function L(e, t = {}) {
+    xe();
+    const { skipMessage: n = !1 } = t;
+    (o.currentStepName = Y(e) || o.currentStepName || ""),
+      Fe(e),
+      Ve(e, o.selection);
+    const a = X(e),
+      i = St(e);
+    M(!i),
+      (o.lastScreenWasAuthLike = a),
+      a &&
+        o.pendingId &&
+        c.chatInput &&
+        !c.chatInput.value &&
+        (c.chatInput.value = o.pendingId),
+      i && (ce(), le());
+    const r = e.journeyMap || [],
+      s = $e(r) && !i;
+    D(s), xt(o.currentStepName), ae(), n || O(e.message);
+    const u = Array.isArray(e.options) ? e.options : [],
+      $ = (y) => /^\d{2}\/\d{2}\/\d{4}$/.test(y.optionName || y),
+      E = u.filter($),
+      p = u.filter(
+        (y) => !C(o.commands.end, y?.optionValue ?? y, y?.optionName ?? y)
+      );
+    E.length
+      ? (await kt(u), (o.datesShown = 0), Ae())
+      : p.length && be(p, (y, oe) => te(y, oe)),
+      v();
+  }
+  function ne(e) {
+    const t = e?.message ? String(e.message) : String(e || "Unknown error");
+    Q(t), v();
+  }
+  function xt(e) {
+    if (!e || o.availableSteps.size === 0) return;
+    o.availableSteps.has("service type") || (o.selection.serviceType = ""),
+      o.availableSteps.has("service") || (o.selection.service = ""),
+      o.availableSteps.has("location") || (o.selection.location = ""),
+      o.availableSteps.has("date") || (o.selection.date = ""),
+      o.availableSteps.has("time") || (o.selection.time = "");
+    const t = ie.filter((r) => o.availableSteps.has(r)),
+      n = h(e),
+      a = t.indexOf(n);
+    if (a === -1) return;
+    const i = {
+      id: "customer identification",
+      serviceType: "service type",
+      service: "service",
+      location: "location",
+      date: "date",
+      time: "time",
+    };
+    for (const [r, s] of Object.entries(i)) {
+      const u = t.indexOf(s);
+      u !== -1 && u >= a && (o.selection[r] = "");
+    }
+  }
+  function ae() {
+    const e = o.selection;
+    if (
+      !(
+        !!o.journeyChosen?.label ||
+        e.id ||
+        e.serviceType ||
+        e.service ||
+        e.location ||
+        e.date ||
+        e.time
+      )
+    ) {
+      (S.style.display = "none"), (S.innerHTML = "");
+      return;
+    }
+    (S.style.display = "block"), (S.innerHTML = "");
+    const n = document.createElement("div");
+    n.className = "summary-card";
+    const a = document.createElement("div");
+    (a.className = "summary-title"),
+      (a.textContent = l("chipsTitle") || "Your selection"),
+      n.appendChild(a);
+    const i = document.createElement("div");
+    i.className = "summary-chips";
+    const r = (s, u, $, E) => {
+      if (!u) return;
+      const p = document.createElement("button");
+      (p.className = "chip"),
+        (p.title = l("chipChange") || "Change"),
+        (p.textContent = `${l(`chips.${s}`)}: ${u}`),
+        o.backLockedUntilRestart || o.chipsLocked
+          ? ((p.disabled = !0), p.classList.add("disabled"))
+          : (p.onclick = E
+              ? () => {
+                  K(), E();
+                }
+              : () => {
+                  K(), H($);
+                }),
+        i.appendChild(p);
+    };
+    r("id", e.id, "Customer Identification"),
+      o.journeyChosen?.label &&
+        r("journey", o.journeyChosen.label, null, () => {
+          o.backLockedUntilRestart || ee();
+        }),
+      r("serviceType", e.serviceType, "Service Type", () => ve("Service Type")),
+      r("service", e.service, "Service", () => ve("Service")),
+      r("location", e.location, "Location", () => H("Location")),
+      r("date", e.date, "Date", () => H("Date")),
+      r("time", e.time, "Time", () => H("Time")),
+      n.appendChild(i),
+      S.appendChild(n);
+  }
+  async function kt(e) {
+    let t = e;
+    for (o.availableDates = []; ; ) {
+      o.availableDates.push(
+        ...t
+          .map((i) => i.optionName || i)
+          .filter((i) => /^\d{2}\/\d{2}\/\d{4}$/.test(i))
+      );
+      const n = t.find((i) => {
+        const r = String(i.optionValue ?? i).toLowerCase();
+        if (o.commands.loadMore.has(r)) return !0;
+        const s = String(i.optionName || i).toLowerCase(),
+          u = String(l("ui.loadMore") || "").toLowerCase();
+        return u && s === u;
+      });
+      if (!n) break;
+      t = (await k(n.optionValue || n.optionName, !1)).options || [];
+    }
+  }
+  function Ae() {
+    const e = Ge(),
+      t = Math.min(o.datesShown + 9, o.availableDates.length);
+    for (let n = o.datesShown; n < t; n++) {
+      const a = o.availableDates[n],
+        i = document.createElement("button");
+      (i.className = "date-btn"),
+        (i.textContent = a),
+        (i.onclick = () => te(a, a)),
+        e.appendChild(i);
+    }
+    (o.datesShown = t),
+      o.datesShown < o.availableDates.length ? Qe(() => Ae()) : Ze();
+  }
+  function vt(e) {
+    const t = Array.isArray(e?.options) && e.options.length > 0;
+    return X(e) && !t;
+  }
+  async function Ct(e) {
+    const t = o.pendingId || "";
+    t &&
+      (X(e) && c.chatInput && (c.chatInput.value = t),
+      vt(e) && (await te(t, t)));
+  }
+  Ce();
+  const Be = pe;
+  function Lt(e = {}) {
+    const t = e.hostId || "chat-widget";
+    let n = document.getElementById(t);
+    n ||
+      ((n = document.createElement("div")),
+      (n.id = t),
+      (n.style.cssText = "width:360px;height:520px;border:1px solid #ddd;"),
+      document.body.appendChild(n));
+    const a = n,
+      i = e.lng || "en";
+    typeof Be == "function" && Be(i),
+      o && (o.lngCode = i),
+      Ce?.({ root: a, ...e });
+  }
+  function At() {}
+  function Bt(e, t) {}
+  function Et() {}
+  function It(...e) {}
+  function Nt(...e) {}
+  function Tt(e) {
+    return _e?.(e);
+  }
+  function jt() {
+    return {};
+  }
+  return (
+    (w.SendMessage = Nt),
+    (w.destroy = At),
+    (w.getSnapshot = jt),
+    (w.init = Lt),
+    (w.mount = Bt),
+    (w.render = It),
+    (w.setLang = Tt),
+    (w.unmount = Et),
+    Object.defineProperty(w, Symbol.toStringTag, { value: "Module" }),
+    w
+  );
+})({});
